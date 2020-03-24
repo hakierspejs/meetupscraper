@@ -32,9 +32,13 @@ def _get_venue(url):
     LOGGER.info('Looking up %r', url)
     h = lxml.html.fromstring(requests.get(url).text)
     street_class = 'venueDisplay-venue-address text--secondary text--small'
+    try:
+        street = h.xpath(f'//p [@class="{street_class}"]/text()')[0]
+    except IndexError:
+        street = ''
     return Venue(
         name=h.xpath('//p [@class="wrap--singleLine--truncate"]/text()')[0],
-        street=h.xpath(f'//p [@class="{street_class}"]/text()')[0]
+        street=street
     )
 
 
