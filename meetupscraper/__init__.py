@@ -30,18 +30,28 @@ class Event:
 
 def _get_venue(html):
     h = lxml.html.fromstring(html)
-    street_class = "venueDisplay-venue-address text--secondary text--small"
     try:
         street = h.xpath('//* [@data-testid="location-info"]/text()')[0]
     except IndexError:
-        street = ""
+        try:
+            street = h.xpath(
+                '//* [@class="venueDisplay-venue-address '
+                'text--secondary text--small text--wrapNice"]/text()'
+            )[0]
+        except IndexError:
+            street = ""
     try:
         venue_name = h.xpath(
             '//* [@data-event-label="event-location"]/text()'
         )[0]
     except IndexError:
-        LOGGER.debug("html=%r", html)
-        raise
+        try:
+            venue_name = h.xpath(
+                '//* [@class="wrap--singleLine--truncate"]/text()'
+            )[0]
+        except IndexError:
+            LOGGER.debug("html=%r", html)
+            raise
     return Venue(
         name=venue_name,
         street=street,
