@@ -40,6 +40,7 @@ def _get_venue(html):
             )[0]
         except IndexError:
             street = ""
+    street = street.split(' · ')[0]
     try:
         venue_name = h.xpath(
             '//* [@data-event-label="event-location"]/text()'
