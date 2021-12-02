@@ -28,16 +28,22 @@ class Event:
     venue: Venue
 
 
-def _get_venue(url):
-    LOGGER.info("Looking up %r", url)
-    h = lxml.html.fromstring(requests.get(url).text)
+def _get_venue(html):
+    h = lxml.html.fromstring(html)
     street_class = "venueDisplay-venue-address text--secondary text--small"
     try:
-        street = h.xpath(f'//p [contains(@class, "{street_class}")]/text()')[0]
+        street = h.xpath('//* [@data-testid="location-info"]/text()')[0]
     except IndexError:
         street = ""
+    try:
+        venue_name = h.xpath(
+            '//* [@data-event-label="event-location"]/text()'
+        )[0]
+    except IndexError:
+        LOGGER.debug("html=%r", html)
+        raise
     return Venue(
-        name=h.xpath('//p [@class="wrap--singleLine--truncate"]/text()')[0],
+        name=venue_name,
         street=street,
     )
 
@@ -62,6 +68,7 @@ def get_upcoming_events(meetup_name):
             date = date.replace(year=date.year + 1)
         group_name = p[0]
         p.pop()  # discard address
+        LOGGER.info("Looking up %r", meetup_url)
         yield Event(
             title=item.xpath(".//title/text()")[0],
             num_attendees=num_attendees,
@@ -69,5 +76,5 @@ def get_upcoming_events(meetup_name):
             url=meetup_url,
             group_name=group_name,
             description=p[1:],
-            venue=_get_venue(meetup_url),
+            venue=_get_venue(requests.get(meetup_url).text),
         )
