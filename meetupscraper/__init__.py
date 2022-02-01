@@ -51,8 +51,13 @@ def _get_venue(html):
                 '//* [@class="wrap--singleLine--truncate"]/text()'
             )[0]
         except IndexError:
-            LOGGER.debug("html=%r", html)
-            raise
+            try:
+                venue_name = h.xpath(
+                    '//* [@data-testid="venue-name-value"]/text()'
+                )[0]
+            except IndexError:
+                LOGGER.debug("html=%r", html)
+                raise
     return Venue(
         name=venue_name,
         street=street,
