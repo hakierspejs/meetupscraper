@@ -2,6 +2,7 @@ import urllib.parse
 import logging
 import dataclasses
 import datetime
+import json
 
 import dateutil.parser
 import lxml.html
@@ -9,6 +10,7 @@ import requests
 
 
 LOGGER = logging.getLogger("meetupscraper")
+# logging.basicConfig(level='DEBUG')
 
 
 @dataclasses.dataclass(frozen=True)
@@ -20,16 +22,18 @@ class Venue:
 @dataclasses.dataclass(frozen=True)
 class Event:
     url: str
-    num_attendees: int
     date: datetime.datetime
     title: str
-    group_name: str
-    description: list
     venue: Venue
 
 
 def _get_venue(html):
     h = lxml.html.fromstring(html)
+
+    j = json.loads(h.xpath('//script [@id="__NEXT_DATA__"]')[0].text)
+    venue = j['props']['pageProps']['event']['venue']
+    return Venue(name=venue['name'], street=venue['address'])
+
     try:
         street = h.xpath('//* [@data-testid="location-info"]/text()')[0]
     except IndexError:
@@ -40,22 +44,18 @@ def _get_venue(html):
             )[0]
         except IndexError:
             street = ""
-    street = street.split(' · ')[0]
+    street = street.split(" · ")[0]
     try:
-        venue_name = h.xpath(
-            '//* [@data-event-label="event-location"]/text()'
-        )[0]
+        venue_name = h.xpath('//* [@data-event-label="event-location"]/text()')[0]
     except IndexError:
         try:
-            venue_name = h.xpath(
-                '//* [@class="wrap--singleLine--truncate"]/text()'
-            )[0]
+            venue_name = h.xpath('//* [@class="wrap--singleLine--truncate"]/text()')[0]
         except IndexError:
             try:
-                venue_name = h.xpath(
-                    '//* [@data-testid="venue-name-value"]/text()'
-                )[0]
+                venue_name = h.xpath('//* [@data-testid="venue-name-value"]/text()')[0]
             except IndexError:
+                # with open('/tmp/fail.txt', 'w') as f:
+                #    f.write(html)
                 LOGGER.debug("html=%r", html)
                 raise
     return Venue(
@@ -66,31 +66,24 @@ def _get_venue(html):
 
 def get_upcoming_events(meetup_name):
     prefix = "https://www.meetup.com/" + urllib.parse.quote(meetup_name)
-    url = prefix + "/events/rss/"
+    url = prefix + "/events/"
     LOGGER.info("Looking up %r", url)
-    s = requests.get(url).text
-    rss = lxml.etree.fromstring(s.encode())
+    r = requests.get(url)
+    h = lxml.html.fromstring(r.text)
 
     timestamps = []
-    for item in rss.xpath("//item"):
-        description = item.xpath(".//description/text()")[0]
-        h = lxml.html.fromstring(description)
-        p = h.xpath("//p/text()")
-        meetup_url = p.pop()
-        num_attendees = int(p.pop())
-        date = dateutil.parser.parse(p.pop())
+    for item in h.xpath('//a [@class="eventCardHead--title"]'):
+        meetup_url = urllib.parse.urljoin("https://meetup.com", item.get("href"))
+        title = item.text
+        date_s = int(item.xpath("../../* [1]")[0][0].get("datetime")) / 1000
+        date = datetime.datetime.fromtimestamp(date_s)
         now = datetime.datetime.today()
         if date < now:
             date = date.replace(year=date.year + 1)
-        group_name = p[0]
-        p.pop()  # discard address
         LOGGER.info("Looking up %r", meetup_url)
         yield Event(
-            title=item.xpath(".//title/text()")[0],
-            num_attendees=num_attendees,
+            title=title,
             date=date,
             url=meetup_url,
-            group_name=group_name,
-            description=p[1:],
             venue=_get_venue(requests.get(meetup_url).text),
         )
