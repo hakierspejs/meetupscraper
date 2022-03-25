@@ -30,9 +30,12 @@ class Event:
 def _get_venue(html):
     h = lxml.html.fromstring(html)
 
-    j = json.loads(h.xpath('//script [@id="__NEXT_DATA__"]')[0].text)
-    venue = j['props']['pageProps']['event']['venue']
-    return Venue(name=venue['name'], street=venue['address'])
+    try:
+        j = json.loads(h.xpath('//script [@id="__NEXT_DATA__"]')[0].text)
+        venue = j["props"]["pageProps"]["event"]["venue"]
+        return Venue(name=venue["name"], street=venue["address"])
+    except (KeyError, IndexError):
+        pass
 
     try:
         street = h.xpath('//* [@data-testid="location-info"]/text()')[0]
@@ -46,13 +49,19 @@ def _get_venue(html):
             street = ""
     street = street.split(" · ")[0]
     try:
-        venue_name = h.xpath('//* [@data-event-label="event-location"]/text()')[0]
+        venue_name = h.xpath(
+            '//* [@data-event-label="event-location"]/text()'
+        )[0]
     except IndexError:
         try:
-            venue_name = h.xpath('//* [@class="wrap--singleLine--truncate"]/text()')[0]
+            venue_name = h.xpath(
+                '//* [@class="wrap--singleLine--truncate"]/text()'
+            )[0]
         except IndexError:
             try:
-                venue_name = h.xpath('//* [@data-testid="venue-name-value"]/text()')[0]
+                venue_name = h.xpath(
+                    '//* [@data-testid="venue-name-value"]/text()'
+                )[0]
             except IndexError:
                 # with open('/tmp/fail.txt', 'w') as f:
                 #    f.write(html)
@@ -73,7 +82,9 @@ def get_upcoming_events(meetup_name):
 
     timestamps = []
     for item in h.xpath('//a [@class="eventCardHead--title"]'):
-        meetup_url = urllib.parse.urljoin("https://meetup.com", item.get("href"))
+        meetup_url = urllib.parse.urljoin(
+            "https://meetup.com", item.get("href")
+        )
         title = item.text
         date_s = int(item.xpath("../../* [1]")[0][0].get("datetime")) / 1000
         date = datetime.datetime.fromtimestamp(date_s)
