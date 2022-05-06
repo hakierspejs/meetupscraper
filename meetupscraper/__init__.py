@@ -86,7 +86,7 @@ def get_upcoming_events(meetup_name):
             "https://meetup.com", item.get("href")
         )
         title = item.text
-        date_s = int(item.xpath("../../* [1]")[0][0].get("datetime")) / 1000
+        date_s = int(item.xpath("../..//* [@datetime]/@datetime")[0]) / 1000
         date = datetime.datetime.fromtimestamp(date_s)
         now = datetime.datetime.today()
         if date < now:
