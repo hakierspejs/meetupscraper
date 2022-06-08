@@ -2,10 +2,7 @@ import urllib.parse
 import logging
 import dataclasses
 import datetime
-import json
 
-import dateutil.parser
-import lxml.html
 import requests
 
 
@@ -27,74 +24,20 @@ class Event:
     venue: Venue
 
 
-def _get_venue(html):
-    h = lxml.html.fromstring(html)
-
-    try:
-        j = json.loads(h.xpath('//script [@id="__NEXT_DATA__"]')[0].text)
-        venue = j["props"]["pageProps"]["event"]["venue"]
-        return Venue(name=venue["name"], street=venue["address"])
-    except (KeyError, IndexError):
-        pass
-
-    try:
-        street = h.xpath('//* [@data-testid="location-info"]/text()')[0]
-    except IndexError:
-        try:
-            street = h.xpath(
-                '//* [@class="venueDisplay-venue-address '
-                'text--secondary text--small text--wrapNice"]/text()'
-            )[0]
-        except IndexError:
-            street = ""
-    street = street.split(" · ")[0]
-    try:
-        venue_name = h.xpath(
-            '//* [@data-event-label="event-location"]/text()'
-        )[0]
-    except IndexError:
-        try:
-            venue_name = h.xpath(
-                '//* [@class="wrap--singleLine--truncate"]/text()'
-            )[0]
-        except IndexError:
-            try:
-                venue_name = h.xpath(
-                    '//* [@data-testid="venue-name-value"]/text()'
-                )[0]
-            except IndexError:
-                # with open('/tmp/fail.txt', 'w') as f:
-                #    f.write(html)
-                LOGGER.debug("html=%r", html)
-                raise
-    return Venue(
-        name=venue_name,
-        street=street,
-    )
-
-
 def get_upcoming_events(meetup_name):
-    prefix = "https://www.meetup.com/" + urllib.parse.quote(meetup_name)
-    url = prefix + "/events/"
+    url = f"https://api.meetup.com/2/events?group_urlname={urllib.parse.quote(meetup_name)}"
     LOGGER.info("Looking up %r", url)
     r = requests.get(url)
-    h = lxml.html.fromstring(r.text)
 
-    timestamps = []
-    for item in h.xpath('//a [@class="eventCardHead--title"]'):
-        meetup_url = urllib.parse.urljoin(
-            "https://meetup.com", item.get("href")
-        )
-        title = item.text
-        date_s = int(item.xpath("../..//* [@datetime]/@datetime")[0]) / 1000
-        date = datetime.datetime.fromtimestamp(date_s)
-        now = datetime.datetime.today()
-        if date < now:
-            date = date.replace(year=date.year + 1)
-        LOGGER.info("Looking up %r", meetup_url)
+    events = r.json()["results"]
+
+    for event in events:
+        date = datetime.datetime.fromtimestamp(event["time"] / 1000)
+        venue = event["venue"]
+
         yield Event(
-            title=title,
+            title=event["name"],
             date=date,
-            url=meetup_url,
-            venue=_get_venue(requests.get(meetup_url).text),
+            url=event["event_url"],
+            venue=Venue(name=venue["name"], street=venue["address_1"]),
         )
