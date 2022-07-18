@@ -39,5 +39,5 @@ def get_upcoming_events(meetup_name):
             title=event["name"],
             date=date,
             url=event["event_url"],
-            venue=Venue(name=venue["name"], street=venue["address_1"]),
+            venue=Venue(name=venue["name"], street=venue.get("address_1")),
         )
