@@ -25,11 +25,11 @@ class Event:
 
 
 def get_upcoming_events(meetup_name):
-    url = f"https://api.meetup.com/2/events?group_urlname={urllib.parse.quote(meetup_name)}"
+    url = f"https://api.meetup.com/{urllib.parse.quote(meetup_name)}/events"
     LOGGER.info("Looking up %r", url)
     r = requests.get(url)
 
-    events = r.json()["results"]
+    events = r.json()
 
     for event in events:
         date = datetime.datetime.fromtimestamp(event["time"] / 1000)
@@ -38,6 +38,6 @@ def get_upcoming_events(meetup_name):
         yield Event(
             title=event["name"],
             date=date,
-            url=event["event_url"],
+            url=event["link"],
             venue=Venue(name=venue["name"], street=venue.get("address_1")),
         )
