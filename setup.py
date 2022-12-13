@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name='meetupscraper',
-    version='0.9.1',
+    version='0.9.2',
     description=__doc__,
     url='http://github.com/hakierspejs/meetupscraper',
     author='Hakiespejs Łódź',
