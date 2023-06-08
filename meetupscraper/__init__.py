@@ -33,7 +33,7 @@ def get_upcoming_events(meetup_name):
 
     for event in events:
         date = datetime.datetime.fromtimestamp(event["time"] / 1000)
-        venue = event["venue"]
+        venue = event.get("venue", {"name": "N/A"})
 
         yield Event(
             title=event["name"],
