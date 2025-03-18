@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name='meetupscraper',
-    version='0.11.0',
+    version='0.11.1',
     description='A web scraper for meetup.com',
     long_description='Allows you to access events tied to a specific meetup group in a structured way',
     url='http://github.com/hakierspejs/meetupscraper',

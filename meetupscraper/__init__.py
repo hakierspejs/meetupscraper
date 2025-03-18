@@ -70,9 +70,14 @@ def get_upcoming_events(meetup_name, name_regex=None):
             LOGGER.info("Skipping event %r", event_name)
             continue
 
+        venue = Venue(name=venue_name, street=venue_street)
+        # set to None if no address nor name
+        if not venue_name and not venue_street:
+            venue = None
+
         yield Event(
             title=event_name,
             date=event_start,
             url=event_url,
-            venue=Venue(name=venue_name, street=venue_street),
+            venue=venue,
         )
