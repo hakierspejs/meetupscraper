@@ -19,5 +19,6 @@ setup(
         'requests',
         'lxml',
         'python-dateutil',
+        'icalendar',
     ]
 )
