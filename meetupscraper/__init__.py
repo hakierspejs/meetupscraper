@@ -49,13 +49,12 @@ def get_upcoming_events(meetup_name, name_regex=None):
 
         event_name = str(component.get('summary', 'No Title'))
         event_url = str(component.get('url', ''))
-        event_start = component.get('dtstart').dt
+        
+        dtstart = component.get('dtstart')
+        event_start = dtstart.dt
         
         if isinstance(event_start, datetime.date) and not isinstance(event_start, datetime.datetime):
             event_start = datetime.datetime.combine(event_start, datetime.time.min)
-        
-        if event_start.tzinfo is not None:
-            event_start = event_start.astimezone(timezone.utc).replace(tzinfo=None)
 
         location = str(component.get('location', ''))
         venue_name = location
