@@ -20,5 +20,8 @@ setup(
         'lxml',
         'python-dateutil',
         'icalendar',
+        'gql',
+        'aiohttp',
+        'json'
     ]
 )
