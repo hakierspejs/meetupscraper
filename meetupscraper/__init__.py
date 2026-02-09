@@ -6,6 +6,8 @@ import re
 from datetime import timezone
 import icalendar
 import requests
+from gql_data import get_gql_data
+import json
 
 
 LOGGER = logging.getLogger("meetupscraper")
@@ -56,22 +58,32 @@ def get_upcoming_events(meetup_name, name_regex=None):
         if isinstance(event_start, datetime.date) and not isinstance(event_start, datetime.datetime):
             event_start = datetime.datetime.combine(event_start, datetime.time.min)
 
-        location = str(component.get('location', ''))
-        venue_name = location
-        venue_street = ''
-        
-        if ',' in location:
-            venue_parts = location.split(',', 1)
-            venue_name = venue_parts[0].strip()
-            venue_street = venue_parts[1].strip()
-
         if regex and not regex.search(event_name):
             LOGGER.info("Skipping event %r", event_name)
             continue
 
-        venue = Venue(name=venue_name, street=venue_street)
-        # set to None if no address nor name
-        if not venue_name and not venue_street:
+        #location = str(component.get('location', ''))
+        #venue_name = location
+        #venue_street = ''
+        #
+        #if ',' in location:
+        #    venue_parts = location.split(',', 1)
+        #    venue_name = venue_parts[0].strip()
+        #    venue_street = venue_parts[1].strip()
+        #
+        #venue = Venue(name=venue_name, street=venue_street)
+        ## set to None if no address nor name
+        #if not venue_name and not venue_street:
+        #    venue = None
+        try:
+            event_id = re.search(r".+\/(\d+)\/", event_url).groups()[0]
+            gql_data = get_gql_data(event_id)
+            print(gql_data['event']['venue'])
+            venue = Venue(
+                    name=gql_data['event']['venue']['name'],
+                    street=gql_data['event']['venue']['address'] + ', ' + gql_data['event']['venue']['city']
+            )
+        except:
             venue = None
 
         yield Event(
