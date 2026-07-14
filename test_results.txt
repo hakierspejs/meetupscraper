@@ -1,0 +1,16 @@
+=== groupSearch with query only ===
+Status: 200
+Body: {"data":{"groupSearch":{"edges":[{"node":{"name":"Impact Warsaw Family","urlname":"impact-warsaw-family","city":"Warsaw","country":"pl"}},{"node":{"name":"Warsaw Locals Community","urlname":"warsaw-locals-community","city":"Warsaw","country":"pl"}},{"node":{"name":"Warsaw Apache Airflow Meetup Group","urlname":"warsaw-apache-airflow-meetup-group","city":"Warsaw","country":"pl"}},{"node":{"name":"Warsaw Pub Crawl","urlname":"warsawpubcrawl","city":"Warsaw","country":"pl"}},{"node":{"name":"AI builders Warsaw","urlname":"ai-builders-warsaw","city":"Warsaw","country":"pl"}},{"node":{"name":"Meet & Speak - Warsaw Social & Language Exchange","urlname":"meet-speak-warsaw-social-language-exchange","city":"Warsaw","country":"pl"}},{"node":{"name":"Rust Warsaw","urlname":"rust-warsaw","city":"Warsaw","country":"pl"}},{"node":{"name":"Warsaw English speaking Club","urlname":"warsaw-english-speaking-club","city":"Warsaw","country":"pl"}},{"node":{"name":"Sweet Mokotow Neighbors","urlname":"sweet-mokotow-neighbors","city":"Warsaw","country":"pl"}},{"node":{"name":"Czyste Pędzle Warsaw","urlname":"czyste-pędzle-warsaw","city":"Warsaw","country":"pl"}}],"totalCount":10}}}
+
+=== groupSearch with country ===
+Status: 200
+Body: {"data":{"groupSearch":{"edges":[],"totalCount":0}}}
+
+=== groupSearch with radius ===
+Status: 200
+Body: {"data":{"groupSearch":{"edges":[],"totalCount":0}}}
+
+=== groups all ===
+Status: 200
+Body: {"data":{"groups":[{"name":"The Yerushalayim Amiga Meetup Group","urlname":"_fns_amiga@1","city":"Jerusalem","country":"il"},{"name":"The Washington Anime Meetup Group","urlname":"_fns_anime@57","city":"Washington","country":"us"},{"name":"Morris County Bass Player Meetup Group","urlname":"_fns_bass@16","city":"Morris Plains","country":"us"},{"name":"The Portland Birds Meetup Group","urlname":"_fns_birds@39","city":"Portland","country":"us"},{"name":"The Austin Weblogger Meetup Group","urlname":"_fns_blog@114","city":"Austin","country":"us"},{"name":"The Greater Boston Area Weblogger Meetup Group","urlname":"bloggers","city":"Cambridge","country":"us"},{"name":"The Denver Weblogger Meetup Group","urlname":"_fns_blog@142","city":"Denver","country":"us"},{"name":"CLUTCH-22","urlname":"_fns_blog@22","city":"West Lafayette","country":"us"},{"name":"The Milwaukee Weblogger Meetup Group","urlname":"_fns_blog@127","city":"Milwaukee","country":"us"},{"name":"The Minneapolis Weblogger Meetup Group","urlname":"_fns_blog@128","city":"Minneapolis","country":"us"}]}}
+

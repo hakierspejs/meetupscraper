@@ -6,7 +6,7 @@ import re
 from datetime import timezone
 import icalendar
 import requests
-from gql_data import get_gql_data
+from gql_data import get_gql_data, get_groups_by_city
 import json
 
 
@@ -62,23 +62,9 @@ def get_upcoming_events(meetup_name, name_regex=None):
             LOGGER.info("Skipping event %r", event_name)
             continue
 
-        #location = str(component.get('location', ''))
-        #venue_name = location
-        #venue_street = ''
-        #
-        #if ',' in location:
-        #    venue_parts = location.split(',', 1)
-        #    venue_name = venue_parts[0].strip()
-        #    venue_street = venue_parts[1].strip()
-        #
-        #venue = Venue(name=venue_name, street=venue_street)
-        ## set to None if no address nor name
-        #if not venue_name and not venue_street:
-        #    venue = None
         try:
             event_id = re.search(r".+\/(\d+)\/", event_url).groups()[0]
             gql_data = get_gql_data(event_id)
-            print(gql_data['event']['venue'])
             venue = Venue(
                     name=gql_data['event']['venue']['name'],
                     street=gql_data['event']['venue']['address'] + ', ' + gql_data['event']['venue']['city']
@@ -92,3 +78,50 @@ def get_upcoming_events(meetup_name, name_regex=None):
             url=event_url,
             venue=venue,
         )
+
+
+def get_events_by_city(city_name, name_regex=None, max_groups=10):
+    """
+    Search for upcoming events in a given city by finding groups and aggregating their events.
+    
+    Args:
+        city_name: Name of the city to search for events (e.g., 'Warsaw', 'Krakow')
+        name_regex: Optional regex pattern to filter events by title
+        max_groups: Maximum number of groups to search (default 10)
+    
+    Yields:
+        Event objects for all upcoming events in the city
+    """
+    LOGGER.info("Searching for groups in city: %s", city_name)
+    
+    # Search for groups in the city
+    groups_result = get_groups_by_city(city_name, limit=max_groups)
+    
+    groups = groups_result.get('groupSearch', {}).get('edges', [])
+    if not groups:
+        LOGGER.warning("No groups found for city: %s", city_name)
+        return
+    
+    LOGGER.info("Found %d groups in %s", len(groups), city_name)
+    
+    # Collect events from all groups
+    seen_events = set()  # To avoid duplicates
+    
+    for group_edge in groups:
+        group = group_edge.get('node', {})
+        urlname = group.get('urlname')
+        
+        if not urlname:
+            continue
+            
+        LOGGER.info("Fetching events from group: %s", group.get('name', urlname))
+        
+        try:
+            for event in get_upcoming_events(urlname, name_regex=name_regex):
+                # Use URL as unique identifier to avoid duplicates
+                if event.url not in seen_events:
+                    seen_events.add(event.url)
+                    yield event
+        except Exception as e:
+            LOGGER.warning("Failed to fetch events from group %s: %s", urlname, e)
+            continue
